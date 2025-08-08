@@ -323,7 +323,10 @@
   touch-action: manipulation;
 }
 @media (hover: none) and (pointer: coarse) {
-  button:focus {
+ .startButton:focus {
+    outline: none;
+  }
+ .returnButton:focus {
     outline: none;
   }
 }
