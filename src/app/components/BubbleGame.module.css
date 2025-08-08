@@ -302,3 +302,14 @@
   border-radius: 8px;
   user-select: none;
 }
+.bubble {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.bubble {
+  touch-action: manipulation;
+}
