@@ -1,0 +1,229 @@
+/* components/BubbleGame.module.css */
+.container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-color: #f5f5f7;
+  overflow: hidden;
+/* Add to BubbleGame.module.css */
+.particleBackground {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(169, 196, 202, 0.5);
+  border-radius: 50%;
+  animation: float 15s linear infinite;
+  will-change: transform;
+}
+
+@keyframes float {
+  0% { transform: translateY(100vh); }
+  100% { transform: translateY(-20vh); }
+}
+
+.container {
+  position: relative;
+  z-index: 1; /* Ensure game content appears above particles */
+}
+  z-index: 1; 
+  font-family: 'Inter', sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+.highScore {
+  font-size: 0.9rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: left;
+  justify-content: left;
+}
+
+.bubblesContainer {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 60px);
+}
+
+.bubble {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #a9c4ca;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.bubble:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.bubble.clicked {
+  background-color: #8ab3c1;
+}
+
+.bubble.correct {
+  background-color: #7dbb91;
+  position: relative;
+}
+
+.bubble.error {
+  background-color: #ff6b6b;
+  animation: shake 0.5s;
+}
+
+.number {
+  font-size: 1.5rem;
+}
+
+.checkmark {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  font-size: 1.2rem;
+  color: white;
+  background-color: rgba(0,0,0,0.2);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(-50%, -50%); }
+  20%, 60% { transform: translate(-55%, -50%); }
+  40%, 80% { transform: translate(-45%, -50%); }
+}
+
+.startScreen,
+.gameOverScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(245, 245, 247, 0.9);
+  z-index: 20;
+}
+
+.startScreen button,
+.gameOverScreen button {
+  padding: 12px 24px;
+  background-color: #a9c4ca;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.gameOverScreen h2 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.gameOverScreen p {
+  color: #666;
+  font-size: 1.2rem;
+}
+/* Enhanced visual feedback */
+.bubble.correct {
+  background-color: #7dbb91;
+  transition: background-color 0.3s ease;
+}
+
+.checkmark {
+  /* More visible checkmark */
+  font-size: 1.3rem;
+  background: rgba(255,255,255,0.3);
+}
+@keyframes pop {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  80% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.bubble {
+  animation: pop 0.3s ease-out;
+}
+/* Add these styles at the bottom of your CSS file */
+.particleBackground {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background-color: rgba(50, 52, 53, 0.4);
+  border-radius: 50%;
+  animation: float 15s linear infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(100vh);
+  }
+  100% {
+    transform: translateY(-20vh);
+  }
+}
