@@ -303,14 +303,14 @@
   user-select: none;
 }
 button {
-  -webkit-tap-highlight-color: transparent;  /* removes tap highlight on mobile */
-  outline: none !important;                   /* removes focus outline */
-  user-select: none;
+  -webkit-tap-highlight-color: transparent; /* removes tap highlight on iOS and Android */
+  outline: none; /* removes focus outline */
+  user-select: none; /* disables text selection */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  touch-action: manipulation;                 /* better tap handling */
 }
+
 
 .bubble {
   -webkit-tap-highlight-color: transparent;
