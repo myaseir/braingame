@@ -17,6 +17,12 @@ const BubbleGame = ({ onRestart }) => {
   const [clickedNumbers, setClickedNumbers] = useState([]);
   const [correctNumbers, setCorrectNumbers] = useState([]);
   const [countdown, setCountdown] = useState(3);
+  const [showPerfectRound, setShowPerfectRound] = useState(false);
+
+const [health, setHealth] = useState(0);
+const [streak, setStreak] = useState(0);
+
+
 
 
   const [showRoundScreen, setShowRoundScreen] = useState(false);
@@ -29,6 +35,7 @@ const [perfectRound, setPerfectRound] = useState(false); // For suggestion #5
   const maxRound = 10;
   const initialRevealTime = 3000;
   const minRevealTime = 1000;
+// max 7 seconds (7000 ms)
 
   
 const [highScore, setHighScore] = useState(0);
@@ -45,12 +52,34 @@ useEffect(() => {
 
 // Call vibrate() on correct/wrong answers
   // Generate random positions
-  const generatePositions = useCallback((count) => {
-    return Array.from({ length: count }, () => ({
-      left: 10 + Math.random() * 80,
-      top: 15 + Math.random() * 70
-    }));
-  }, []);
+ const generatePositions = useCallback((count) => {
+  const positions = [];
+
+  const minDistance = 15; // minimum distance in % between bubbles
+
+  function distance(pos1, pos2) {
+    const dx = pos1.left - pos2.left;
+    const dy = pos1.top - pos2.top;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  for (let i = 0; i < count; i++) {
+    let newPos;
+    let tries = 0;
+    do {
+      newPos = {
+        left: 10 + Math.random() * 80,
+        top: 15 + Math.random() * 70
+      };
+      tries++;
+      if (tries > 100) break; // fail-safe to avoid infinite loops
+    } while (positions.some(pos => distance(pos, newPos) < minDistance));
+    positions.push(newPos);
+  }
+
+  return positions;
+}, []);
+
 
   // Generate unique numbers
   const generateNumbers = useCallback((count) => {
@@ -74,63 +103,85 @@ useEffect(() => {
 // Update the startRound function in your BubbleGame component
 const startRound = useCallback((roundNum) => {
   setShowRoundScreen(true);
-  setCountdown(3); // reset countdown to 3
+  setCountdown(3);
 
-  const countdownInterval = setInterval(() => {
-    setCountdown(prev => {
-      if (prev === 1) {
-        clearInterval(countdownInterval);
-        setShowRoundScreen(false);
+  let counter = 3;
+  const interval = setInterval(() => {
+    counter -= 1;
+    if (counter === 0) {
+      clearInterval(interval);
+      setShowRoundScreen(false);
 
-        const count = Math.min(initialCount + roundNum - 1, 12);
-        const nums = generateNumbers(count);
-        const pos = generatePositions(count);
-        setNumbers(nums);
-        setPositions(pos);
-        setCurrentStep(0);
-        setError(false);
-        setClickedNumbers([]);
-        setCorrectNumbers([]);
-        setGameState('showing');
+      const count = 4; // keep 5 bubbles always
+      const nums = generateNumbers(count);
+      const pos = generatePositions(count);
+      setNumbers(nums);
+      setPositions(pos);
+      setCurrentStep(0);
+      setError(false);
+      setClickedNumbers([]);
+      setCorrectNumbers([]);
+      setGameState('showing');
 
-        setTimeout(() => {
-          setGameState('playing');
-        }, Math.max(initialRevealTime - (roundNum - 1) * 200, minRevealTime));
+    const revealTime = Math.max(initialRevealTime - (roundNum - 1) * 500, minRevealTime);
 
-        return 3; // reset countdown for next round
-      }
-      return prev - 1;
-    });
+
+      console.log('Round:', roundNum, 'Reveal time (ms):', revealTime);
+      
+      setTimeout(() => {
+        setGameState('playing');
+      }, revealTime);
+    } else {
+      setCountdown(counter);
+    }
   }, 1000);
-
 }, [generateNumbers, generatePositions]);
+
+
 
 
   // Handle bubble click
 const handleClick = (num) => {
   if (gameState !== 'playing') return;
-  
+
   const sorted = [...numbers].sort((a, b) => a - b);
   setClickedNumbers(prev => [...prev, num]);
-  
+
   if (num === sorted[currentStep]) {
     setCorrectNumbers(prev => [...prev, num]);
     vibrate(100); // short buzz on correct click
 
-    
     if (currentStep + 1 === sorted.length) {
       // Round complete - calculate new score first
       const updatedScore = score + numbers.length;
       const newRound = round + 1;
-      
+
       // Then check high score
       if (updatedScore > highScore) {
         localStorage.setItem('highScore', updatedScore);
         setHighScore(updatedScore);
       }
-      
+
       setScore(updatedScore);
-      
+
+      // Increase streak by 1
+      setStreak(prevStreak => {
+        const newStreak = prevStreak + 1;
+
+        // If streak hits 4, add 1 health and reset streak to 0
+        if (newStreak === 4) {
+          setHealth(h => h + 1);
+          return 0;
+        }
+        return newStreak;
+      });
+
+      // Show Perfect Round celebration if no errors this round
+      if (!error) {
+        setShowPerfectRound(true);
+        setTimeout(() => setShowPerfectRound(false), 2000);
+      }
+
       if (newRound > maxRound) {
         setGameState('gameover');
       } else {
@@ -140,13 +191,27 @@ const handleClick = (num) => {
     } else {
       setCurrentStep(prev => prev + 1);
     }
+
   } else {
     vibrate([200, 100, 200]); // longer vibration on error
 
-    setError(true);
-    setTimeout(() => setGameState('gameover'), 1000);
+    // On error: 
+    // if health > 0, consume health and keep playing (reset streak)
+    if (health > 0) {
+      setHealth(h => h - 1);
+      setStreak(0);
+      setError(true);
+      // maybe reset current step to allow retry? Or just continue playing
+      // Here I suggest you can just mark error but allow retry on same step:
+      setTimeout(() => setError(false), 1000);
+    } else {
+      // no health left -> game over
+      setError(true);
+      setTimeout(() => setGameState('gameover'), 1000);
+    }
   }
 };
+
 
   return (
     
@@ -160,6 +225,10 @@ const handleClick = (num) => {
 </div>
         <div className={styles.icon}>☰</div>
       </div>
+<div className={styles.statusBar}>
+  <div>Health: {health}</div>
+  <div>Streak: {streak}</div>
+</div>
 
 
       <div className={styles.bubblesContainer}>
@@ -205,6 +274,12 @@ const handleClick = (num) => {
   </div>
 )}
 
+
+{showPerfectRound && (
+  <div className={styles.perfectRoundCelebration}>
+    🎉 Perfect Round! 🎉
+  </div>
+)}
 
     </div>
   );
