@@ -349,7 +349,7 @@ useEffect(() => {
 
       {gameState === 'idle' && (
         <div className={styles.startScreen}>
-          <button onClick={() => {
+          <button className='startButton' onClick={() => {
   if (startSoundRef.current) {
     startSoundRef.current.currentTime = 0;
     startSoundRef.current.play().catch(() => {});
@@ -373,7 +373,7 @@ useEffect(() => {
         <p>Score: {score}</p>
       </>
     )}
-  <button onClick={() => {
+  <button className='returnButton ' onClick={() => {
   if (returnSoundRef.current) {
     returnSoundRef.current.currentTime = 0;
     returnSoundRef.current.play().catch(() => {});

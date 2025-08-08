@@ -302,14 +302,13 @@
   border-radius: 8px;
   user-select: none;
 }
-.button {
-  -webkit-tap-highlight-color: transparent; /* removes tap highlight on iOS and Android */
-  outline: none; /* removes focus outline */
-  user-select: none; /* disables text selection */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+.startButton, .returnButton {
+  -webkit-tap-highlight-color: transparent;
+  outline: none !important;
+  user-select: none;
+  touch-action: manipulation;
 }
+
 
 
 .bubble {
