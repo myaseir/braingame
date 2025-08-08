@@ -18,9 +18,24 @@ const BubbleGame = ({ onRestart }) => {
   const [correctNumbers, setCorrectNumbers] = useState([]);
   const [countdown, setCountdown] = useState(3);
   const [showPerfectRound, setShowPerfectRound] = useState(false);
+const [won, setWon] = useState(false);
+const [gameStarted, setGameStarted] = useState(false);
 
 const [health, setHealth] = useState(0);
 const [streak, setStreak] = useState(0);
+
+
+
+// music
+  const audioRef = useRef(null);           // background music
+  const correctAudioRef = useRef(null);
+  const wrongAudioRef = useRef(null);
+  const gameOverAudioRef = useRef(null);
+  const winAudioRef = useRef(null);
+  const startSoundRef = useRef(null);
+const returnSoundRef = useRef(null);
+
+
 
 
 
@@ -32,7 +47,7 @@ const [perfectRound, setPerfectRound] = useState(false); // For suggestion #5
 
   // Configuration
   const initialCount = 3;
-  const maxRound = 10;
+  const maxRound = 20;
   const initialRevealTime = 3000;
   const minRevealTime = 1000;
 // max 7 seconds (7000 ms)
@@ -49,6 +64,41 @@ useEffect(() => {
   if (navigator.vibrate) navigator.vibrate(pattern);
 };
 
+
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    let targetVolume;
+    if (gameState === 'playing') {
+      targetVolume = 1.0;  // loud when playing
+    } else if (gameState === 'showing' || gameState === 'idle') {
+      targetVolume = 0.3;  // quieter during countdown or idle
+    } else if (gameState === 'gameover') {
+      targetVolume = 0.1;  // very low on game over
+    } else {
+      targetVolume = 0.1;  // fallback volume
+    }
+
+    const duration = 1000; // 1 second fade
+    const stepTime = 50;
+    const steps = duration / stepTime;
+    const volumeStep = (targetVolume - audioRef.current.volume) / steps;
+    let currentStep = 0;
+
+    const interval = setInterval(() => {
+      if (audioRef.current) {
+        audioRef.current.volume = Math.min(
+          Math.max(audioRef.current.volume + volumeStep, 0),
+          1
+        );
+      }
+      currentStep++;
+      if (currentStep >= steps) clearInterval(interval);
+    }, stepTime);
+
+    return () => clearInterval(interval);
+  }, [gameState]);
 
 // Call vibrate() on correct/wrong answers
   // Generate random positions
@@ -90,18 +140,8 @@ useEffect(() => {
     return Array.from(nums);
   }, []);
 
-  // Start new game
-  const startGame = useCallback(() => {
-    setScore(0);
-    setRound(1);
-    setClickedNumbers([]);
-    setCorrectNumbers([]);
-    startRound(1);
-  }, []);
 
-  // Start new round
-// Update the startRound function in your BubbleGame component
-const startRound = useCallback((roundNum) => {
+  const startRound = useCallback((roundNum) => {
   setShowRoundScreen(true);
   setCountdown(3);
 
@@ -134,8 +174,29 @@ const startRound = useCallback((roundNum) => {
     } else {
       setCountdown(counter);
     }
-  }, 1000);
+  }, 500);
 }, [generateNumbers, generatePositions]);
+  // Start new game
+const startGame = useCallback(() => {
+  setGameStarted(true);
+  setHealth(0);      // Reset health to 0 when starting game
+  setStreak(0);      // Reset streak to 0
+  setScore(0);
+  setRound(1);
+  setClickedNumbers([]);
+  setCorrectNumbers([]);
+  startRound(1);
+  if (audioRef.current) {
+    audioRef.current.play().catch(() => {
+      // autoplay might be blocked, can handle fallback here if needed
+    });
+  }
+}, [startRound]);
+
+
+  // Start new round
+// Update the startRound function in your BubbleGame component
+
 
 
 
@@ -151,6 +212,12 @@ const handleClick = (num) => {
     setCorrectNumbers(prev => [...prev, num]);
     vibrate(100); // short buzz on correct click
 
+    // Play correct click sound
+    if (correctAudioRef.current) {
+      correctAudioRef.current.currentTime = 0;
+      correctAudioRef.current.play().catch(() => {});
+    }
+
     if (currentStep + 1 === sorted.length) {
       // Round complete - calculate new score first
       const updatedScore = score + numbers.length;
@@ -164,17 +231,8 @@ const handleClick = (num) => {
 
       setScore(updatedScore);
 
-      // Increase streak by 1
-      setStreak(prevStreak => {
-        const newStreak = prevStreak + 1;
-
-        // If streak hits 4, add 1 health and reset streak to 0
-        if (newStreak === 4) {
-          setHealth(h => h + 1);
-          return 0;
-        }
-        return newStreak;
-      });
+      // Increase streak by 1 or reset if hits 4
+      setStreak(prevStreak => (prevStreak + 1 === 4 ? 0 : prevStreak + 1));
 
       // Show Perfect Round celebration if no errors this round
       if (!error) {
@@ -183,7 +241,14 @@ const handleClick = (num) => {
       }
 
       if (newRound > maxRound) {
+        setWon(true);
         setGameState('gameover');
+
+        // Play winning sound
+        if (winAudioRef.current) {
+          winAudioRef.current.currentTime = 0;
+          winAudioRef.current.play().catch(() => {});
+        }
       } else {
         setRound(newRound);
         startRound(newRound);
@@ -191,32 +256,60 @@ const handleClick = (num) => {
     } else {
       setCurrentStep(prev => prev + 1);
     }
-
   } else {
     vibrate([200, 100, 200]); // longer vibration on error
 
-    // On error: 
-    // if health > 0, consume health and keep playing (reset streak)
+    // Play wrong click sound
+    if (wrongAudioRef.current) {
+      wrongAudioRef.current.currentTime = 0;
+      wrongAudioRef.current.play().catch(() => {});
+    }
+
+    // On error: consume health if available, reset streak
     if (health > 0) {
       setHealth(h => h - 1);
       setStreak(0);
       setError(true);
-      // maybe reset current step to allow retry? Or just continue playing
-      // Here I suggest you can just mark error but allow retry on same step:
       setTimeout(() => setError(false), 1000);
     } else {
       // no health left -> game over
       setError(true);
       setTimeout(() => setGameState('gameover'), 1000);
+
+      // Play game over sound
+      if (gameOverAudioRef.current) {
+        gameOverAudioRef.current.currentTime = 0;
+        gameOverAudioRef.current.play().catch(() => {});
+      }
     }
   }
 };
+
+// And add this useEffect somewhere inside your component to handle health increment:
+useEffect(() => {
+  if (streak === 4) {
+    setHealth(h => h + 1);
+  }
+}, [streak]);
+
 
 
   return (
     
     <div className={styles.container}>
       <ParticlesBackground />
+       {/* Background music */}
+      <audio ref={audioRef} src="/bgmusic.mp3" loop preload="auto" />
+
+      {/* Sound effects */}
+      <audio ref={correctAudioRef} src="/tap.wav" preload="auto" />
+      <audio ref={wrongAudioRef} src="/error.mp3" preload="auto" />
+      <audio ref={gameOverAudioRef} src="/over.wav" preload="auto" />
+      <audio ref={winAudioRef} src="/win.wav" preload="auto" />
+  <audio ref={startSoundRef} src="/start.wav" />
+<audio ref={returnSoundRef} src="/return.wav" />
+
+
       <div className={styles.header}>
         <div className={styles.icon}>🧠</div>
         {/* <div className={styles.highScore}>Best: {highScore} Round: {round} </div> */}
@@ -256,17 +349,41 @@ const handleClick = (num) => {
 
       {gameState === 'idle' && (
         <div className={styles.startScreen}>
-          <button onClick={startGame}>Start Game</button>
+          <button onClick={() => {
+  if (startSoundRef.current) {
+    startSoundRef.current.currentTime = 0;
+    startSoundRef.current.play().catch(() => {});
+  }
+  startGame();
+}}>Start Game</button>
+
         </div>
       )}
 
-      {gameState === 'gameover' && (
-        <div className={styles.gameOverScreen}>
-          <h2>Game Over</h2>
-          <p>Score: {score}</p>
-          <button onClick={startGame}>Restart</button>
-        </div>
-      )}
+    {gameState === 'gameover' && (
+  <div className={styles.gameOverScreen}>
+    {won ? (
+      <>
+        <h2>🎉 Congratulations, You Won! 🎉</h2>
+        <p>Final Score: {score}</p>
+      </>
+    ) : (
+      <>
+        <h2>Game Over</h2>
+        <p>Score: {score}</p>
+      </>
+    )}
+  <button onClick={() => {
+  if (returnSoundRef.current) {
+    returnSoundRef.current.currentTime = 0;
+    returnSoundRef.current.play().catch(() => {});
+  }
+  setWon(false); // reset winning state on restart
+  startGame();
+}}>Restart</button>
+  </div>
+)}
+
 {showRoundScreen && (
   <div className={styles.roundTransition}>
     <h2>Round {round}</h2>
