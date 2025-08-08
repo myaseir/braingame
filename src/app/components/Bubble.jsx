@@ -373,14 +373,15 @@ useEffect(() => {
         <p>Score: {score}</p>
       </>
     )}
-  <button className='returnButton ' onClick={() => {
-  if (returnSoundRef.current) {
-    returnSoundRef.current.currentTime = 0;
-    returnSoundRef.current.play().catch(() => {});
-  }
-  setWon(false); // reset winning state on restart
-  startGame();
-}}>Restart</button>
+ <button
+  onClick={(e) => {
+    e.currentTarget.blur();
+    // your button logic here
+  }}
+>
+  Restart
+</button>
+
   </div>
 )}
 
