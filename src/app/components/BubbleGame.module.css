@@ -157,7 +157,15 @@
   justify-content: center;
   background-color: rgba(245, 245, 247, 0.9);
   z-index: 20;
+  outline: none;
+   -webkit-tap-highlight-color: transparent;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
+
 
 .startScreen button,
 .gameOverScreen button {
@@ -165,6 +173,7 @@
   background-color: #a9c4ca;
   color: white;
   border: none;
+   outline: none;
   border-radius: 30px;
   font-size: 1rem;
   cursor: pointer;

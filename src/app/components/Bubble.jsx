@@ -35,6 +35,21 @@ const [streak, setStreak] = useState(0);
   const startSoundRef = useRef(null);
 const returnSoundRef = useRef(null);
 
+useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      audioRef.current?.pause();
+    } else {
+      audioRef.current?.play().catch(() => {});
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}, []);
 
 
 
@@ -349,7 +364,7 @@ useEffect(() => {
 
       {gameState === 'idle' && (
         <div className={styles.startScreen}>
-          <button className='startButton' onClick={() => {
+          <button onClick={() => {
   if (startSoundRef.current) {
     startSoundRef.current.currentTime = 0;
     startSoundRef.current.play().catch(() => {});
@@ -373,16 +388,16 @@ useEffect(() => {
         <p>Score: {score}</p>
       </>
     )}
- <button
-  onClick={(e) => {
-    e.currentTarget.blur();
-    // your button logic here
-  }}
->
-  Restart
-</button>
-
+  <button onClick={() => {
+  if (returnSoundRef.current) {
+    returnSoundRef.current.currentTime = 0;
+    returnSoundRef.current.play().catch(() => {});
+  }
+  setWon(false); // reset winning state on restart
+  startGame();
+}}>Restart</button>
   </div>
+  
 )}
 
 {showRoundScreen && (
